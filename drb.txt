@@ -1,299 +1,40 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>교직원 대상 학교폭력 예방 교육 연수 등록부</title>
-    <style>
-        body { 
-            font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; 
-            background-color: #f4f7f6; 
-            padding: 20px; 
-            color: #333;
-        }
-        .container { 
-            max-width: 600px; 
-            margin: 0 auto; 
-            background: white; 
-            padding: 30px; 
-            border-radius: 12px; 
-            box-shadow: 0 8px 16px rgba(0,0,0,0.1); 
-        }
-        h1 { 
-            text-align: center; 
-            color: #2c3e50; 
-            margin-bottom: 5px; 
-            font-size: 26px; 
-            word-break: keep-all;
-        }
-        h2 { 
-            text-align: center; 
-            color: #7f8c8d; 
-            margin-top: 0; 
-            margin-bottom: 25px; 
-            font-size: 16px; 
-            font-weight: normal; 
-        }
-        .form-group { 
-            margin-bottom: 18px; 
-        }
-        label { 
-            display: block; 
-            margin-bottom: 8px; 
-            font-weight: bold; 
-            font-size: 14px; 
-            color: #444;
-        }
-        input[type="text"], input[type="date"] { 
-            width: 100%; 
-            padding: 12px; 
-            border: 1px solid #ccc; 
-            border-radius: 6px; 
-            box-sizing: border-box; 
-            font-size: 16px;
-            transition: border-color 0.3s;
-        }
-        input[type="text"]:focus, input[type="date"]:focus {
-            border-color: #4CAF50;
-            outline: none;
-        }
-        canvas { 
-            border: 2px dashed #bbb; 
-            border-radius: 6px; 
-            background-color: #fafafa; 
-            cursor: crosshair; 
-            touch-action: none; 
-            width: 100%; 
-            height: 150px; 
-        }
-        .btn-group { 
-            display: flex; 
-            gap: 10px; 
-            margin-top: 20px; 
-        }
-        button { 
-            padding: 14px 15px; 
-            border: none; 
-            border-radius: 6px; 
-            cursor: pointer; 
-            color: white; 
-            font-weight: bold; 
-            font-size: 16px; 
-            transition: opacity 0.3s;
-        }
-        button:hover {
-            opacity: 0.9;
-        }
-        .btn-submit { 
-            background-color: #4CAF50; 
-            flex: 2; 
-        }
-        .btn-clear { 
-            background-color: #e74c3c; 
-            flex: 1; 
-        }
-        .list-section { 
-            margin-top: 40px; 
-            border-top: 2px solid #eee;
-            padding-top: 20px;
-        }
-        .list-section h3 {
-            color: #2c3e50;
-            margin-bottom: 15px;
-        }
-        table { 
-            width: 100%; 
-            border-collapse: collapse; 
-            font-size: 14px; 
-        }
-        th, td { 
-            border: 1px solid #ddd; 
-            padding: 10px; 
-            text-align: center; 
-            vertical-align: middle; 
-        }
-        th { 
-            background-color: #f8f9fa; 
-            color: #333;
-        }
-        img.signature-img { 
-            max-height: 40px; 
-        }
-    </style>
-</head>
-<body>
+function doPost(e) {
+  // ★★★ 아래 따옴표 안에 복사한 구글 스프레드시트의 주소를 붙여넣으세요! ★★★
+  var sheetUrl = "https://docs.google.com/spreadsheets/d/1epODoCoQTNBOAoCIbMlJx-yyHn3l4mH0OnjOalmuUT0/edit?gid=0#gid=0";
+  
+  var ss = SpreadsheetApp.openByUrl(sheetUrl);
+  var sheet = ss.getActiveSheet(); 
+  
+  var data = JSON.parse(e.postData.contents);
 
-<div class="container">
-    <h1>교직원 대상 학교폭력 예방 교육</h1>
-    <h2>온라인 연수 등록부</h2>
-    
-    <div class="form-group">
-        <label for="date">연수 일자</label>
-        <input type="date" id="date">
-    </div>
-    
-    <div class="form-group">
-        <label for="affiliation">소속</label>
-        <input type="text" id="affiliation" value="세종여자고등학교">
-    </div>
+  // 1. Base64 텍스트를 이미지 파일(Blob)로 변환
+  var base64Data = data.signature.split(",")[1];
+  var blob = Utilities.newBlob(Utilities.base64Decode(base64Data), 'image/png', data.name + '_서명.png');
 
-    <div class="form-group">
-        <label for="name">성명</label>
-        <input type="text" id="name" placeholder="이름을 입력하세요">
-    </div>
+  // 2. 구글 드라이브 최상단(내 드라이브)에 이미지 파일 저장
+  var folder = DriveApp.getRootFolder(); 
+  var file = folder.createFile(blob);
+  
+  // 3. 시트 셀에서 이미지를 불러올 수 있도록 링크 보기 권한 허용
+  file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
 
-    <div class="form-group">
-        <label>서명 (아래 영역에 마우스나 터치로 서명해주세요)</label>
-        <canvas id="signaturePad"></canvas>
-    </div>
+  // 4. 셀 안에 쏙 들어가게 만드는 IMAGE 함수 생성
+  var fileId = file.getId();
+  var imageUrl = "https://drive.google.com/uc?export=view&id=" + fileId;
+  var imageFormula = '=IMAGE("' + imageUrl + '")';
 
-    <div class="btn-group">
-        <button class="btn-clear" onclick="clearCanvas()">서명 지우기</button>
-        <button class="btn-submit" onclick="saveRegistration()">등록 완료</button>
-    </div>
+  // 5. 시트의 마지막 줄에 데이터 추가
+  sheet.appendRow([
+    new Date(),
+    data.date,
+    data.affiliation,
+    data.name,
+    imageFormula 
+  ]);
+  
+  // 6. 이미지가 잘 보이도록 방금 추가된 행의 높이를 늘려줌 (60픽셀)
+  sheet.setRowHeight(sheet.getLastRow(), 60);
 
-    <div class="list-section">
-        <h3>등록 명단</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th>연수 일자</th>
-                    <th>소속</th>
-                    <th>성명</th>
-                    <th>서명</th>
-                </tr>
-            </thead>
-            <tbody id="recordList">
-                <!-- 명단이 여기에 추가됩니다 -->
-            </tbody>
-        </table>
-    </div>
-</div>
-
-<script>
-    // 오늘 날짜를 기본값으로 설정
-    document.getElementById('date').valueAsDate = new Date();
-
-    const canvas = document.getElementById('signaturePad');
-    const ctx = canvas.getContext('2d');
-    let isDrawing = false;
-
-    // 캔버스 해상도 보정 (CSS 크기와 실제 픽셀 매칭)
-    function resizeCanvas() {
-        const rect = canvas.getBoundingClientRect();
-        canvas.width = rect.width;
-        canvas.height = rect.height;
-    }
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas(); // 초기 실행
-
-    // 서명 그리기 로직
-    const startDrawing = (e) => {
-        isDrawing = true;
-        draw(e);
-    };
-
-    const stopDrawing = () => {
-        isDrawing = false;
-        ctx.beginPath(); // 경로 초기화 (새로 그릴 때 이어지지 않게)
-    };
-
-    const draw = (e) => {
-        if (!isDrawing) return;
-        e.preventDefault(); // 터치 스크롤 방지
-        
-        const rect = canvas.getBoundingClientRect();
-        const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-        const clientY = e.clientY || (e.touches && e.touches[0].clientY);
-        
-        const x = clientX - rect.left;
-        const y = clientY - rect.top;
-        
-        ctx.lineWidth = 3;
-        ctx.lineCap = 'round';
-        ctx.strokeStyle = '#000'; // 서명 색상 검은색
-        
-        ctx.lineTo(x, y);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(x, y);
-    };
-
-    // 마우스 이벤트
-    canvas.addEventListener('mousedown', startDrawing);
-    canvas.addEventListener('mousemove', draw);
-    canvas.addEventListener('mouseup', stopDrawing);
-    canvas.addEventListener('mouseout', stopDrawing);
-
-    // 터치 이벤트 (모바일 지원)
-    canvas.addEventListener('touchstart', startDrawing, {passive: false});
-    canvas.addEventListener('touchmove', draw, {passive: false});
-    canvas.addEventListener('touchend', stopDrawing);
-
-    // 서명 지우기
-    function clearCanvas() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-    }
-
-    // 데이터 저장 및 명단 로드 로직
-    const storageKey = 'trainingRecords_sejong'; // 로컬 스토리지 키
-
-    function saveRegistration() {
-        const name = document.getElementById('name').value.trim();
-        const affiliation = document.getElementById('affiliation').value.trim();
-        const date = document.getElementById('date').value;
-        
-        if (!name || !affiliation || !date) {
-            alert('모든 항목을 입력해주세요.');
-            return;
-        }
-
-        // 서명 이미지 데이터(Base64) 가져오기
-        const signatureDataUrl = canvas.toDataURL();
-        
-        // 빈 서명 방지 로직 (간단히 캔버스가 비어있는지 체크)
-        const blank = document.createElement('canvas');
-        blank.width = canvas.width;
-        blank.height = canvas.height;
-        if (signatureDataUrl === blank.toDataURL()) {
-            alert('서명을 입력해주세요.');
-            return;
-        }
-
-        const registration = { date, affiliation, name, signature: signatureDataUrl };
-        
-        // 기존 명단 불러오기 및 새 데이터 추가
-        let records = JSON.parse(localStorage.getItem(storageKey)) || [];
-        records.push(registration);
-        localStorage.setItem(storageKey, JSON.stringify(records));
-
-        // 입력 폼 초기화
-        document.getElementById('name').value = '';
-        clearCanvas();
-        loadRecords();
-        alert('등록이 완료되었습니다.');
-    }
-
-    // 명단 테이블 렌더링
-    function loadRecords() {
-        const records = JSON.parse(localStorage.getItem(storageKey)) || [];
-        const tbody = document.getElementById('recordList');
-        tbody.innerHTML = '';
-        
-        records.forEach(record => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${record.date}</td>
-                <td>${record.affiliation}</td>
-                <td>${record.name}</td>
-                <td><img src="${record.signature}" class="signature-img" alt="서명 이미지"></td>
-            `;
-            tbody.appendChild(tr);
-        });
-    }
-
-    // 페이지 접속 시 초기 명단 로드
-    loadRecords();
-</script>
-</body>
-</html>
+  return ContentService.createTextOutput(JSON.stringify({"result": "success"}))
+                       .setMimeType(ContentService.MimeType.JSON);
+}
